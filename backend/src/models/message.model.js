@@ -12,15 +12,17 @@ const messageSchema = new mongoose.Schema({
         required: true,
     },
     text: {
-        type: String
-        
+        type: String,
     },
     image: {
         type: String,
-       
     },
-}, { timestamps: true }
-);
+    // ✅ NEW LOCATION FIELD
+    location: {
+        latitude: Number,
+        longitude: Number
+    }
+}, { timestamps: true });
 
 const Message = mongoose.model("Message", messageSchema);
 export default Message;

@@ -8,8 +8,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 
 const ChatContainer = () => {
-  const { messages, getMessages, isMessagesLoading, selectedUser, subscribeToMessages, unsubscribeFromMessages,
-  } = useChatStore();
+  const { messages, getMessages, isMessagesLoading, selectedUser, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
 
@@ -73,7 +72,18 @@ const ChatContainer = () => {
                   className="sm:max-w-[200px] rounded-md mb-2"
                 />
               )}
-              {message.text && <p>{message.text}</p>}
+              {message.location ? (
+                <a
+                  href={`https://www.google.com/maps?q=${message.location.latitude},${message.location.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline"
+                >
+                  📍 Shared Location: Open in Maps
+                </a>
+              ) : (
+                message.text && <p>{message.text}</p>
+              )}
             </div>
           </div>
         ))}
@@ -83,4 +93,5 @@ const ChatContainer = () => {
     </div>
   );
 };
+
 export default ChatContainer;

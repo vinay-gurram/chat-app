@@ -1,16 +1,19 @@
 import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { Image, Send, X, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [sendingLocation, setSendingLocation] = useState(false);
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
@@ -30,25 +33,51 @@ const MessageInput = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+    if (!text.trim() && !imagePreview && !location) return;
 
     try {
       await sendMessage({
         text: text.trim(),
         image: imagePreview,
+        location, // send location if available
       });
 
       // Clear form
       setText("");
       setImagePreview(null);
+      setLocation(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
+      toast.error("Failed to send message.");
     }
+  };
+
+  const handleSendLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setSendingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setLocation({ latitude, longitude });
+        toast.success("Location added");
+        setSendingLocation(false);
+      },
+      (error) => {
+        toast.error("Failed to get location.");
+        console.error(error);
+        setSendingLocation(false);
+      }
+    );
   };
 
   return (
     <div className="p-4 w-full">
+      {/* Image preview with remove */}
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
           <div className="relative">
@@ -59,11 +88,30 @@ const MessageInput = () => {
             />
             <button
               onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300
-              flex items-center justify-center"
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300 flex items-center justify-center"
               type="button"
+              aria-label="Remove image"
             >
               <X className="size-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Location preview with remove */}
+      {location && (
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-blue-500 bg-blue-100 px-3 py-1 text-blue-700 text-sm">
+            <MapPin size={16} />
+            <span>Location added</span>
+            <button
+              type="button"
+              onClick={() => setLocation(null)}
+              className="ml-2 text-blue-500 hover:text-blue-700"
+              title="Remove location"
+              aria-label="Remove location"
+            >
+              <X size={16} />
             </button>
           </div>
         </div>
@@ -78,6 +126,7 @@ const MessageInput = () => {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
+
           <input
             type="file"
             accept="image/*"
@@ -88,17 +137,34 @@ const MessageInput = () => {
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle
-                     ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className={`hidden sm:flex btn btn-circle ${
+              imagePreview ? "text-emerald-500" : "text-zinc-400"
+            }`}
             onClick={() => fileInputRef.current?.click()}
+            aria-label="Add image"
           >
             <Image size={20} />
           </button>
+
+          <button
+            type="button"
+            className={`hidden sm:flex btn btn-circle ${
+              location ? "text-blue-500" : "text-zinc-400"
+            }`}
+            onClick={handleSendLocation}
+            title="Send Location"
+            aria-label="Send location"
+            disabled={sendingLocation}
+          >
+            <MapPin size={20} />
+          </button>
         </div>
+
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
+          disabled={!text.trim() && !imagePreview && !location}
+          aria-label="Send message"
         >
           <Send size={22} />
         </button>
@@ -106,4 +172,5 @@ const MessageInput = () => {
     </div>
   );
 };
+
 export default MessageInput;
