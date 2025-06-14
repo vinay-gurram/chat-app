@@ -19,6 +19,7 @@ import chatUsersRoute from "./routes/chatUsers.route.js";
 connectDB();
 
 // Dynamic CORS
+
 const allowedOrigins = process.env.CORS_ORIGIN.split(",");
 
 app.use(
@@ -27,12 +28,14 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.error("❌ Not allowed by CORS:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
   })
 );
+
 
 
 
