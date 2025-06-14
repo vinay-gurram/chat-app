@@ -17,7 +17,7 @@ const messageSchema = new mongoose.Schema({
     image: {
         type: String,
     },
-    // ✅ NEW LOCATION FIELD
+    
     location: {
         latitude: Number,
         longitude: Number

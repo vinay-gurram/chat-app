@@ -1,9 +1,13 @@
 import Navbar from "./components/Navbar";
+import FeedPage from "./pages/FeedPage"; // ✅ Home page
+import ConnectionRequests from "./components/ConnectionRequests";
 import HomePage from "./pages/HomePage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import ChatPage from "./pages/ChatPage";
+import EditProfile from "./pages/EditProfile";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -11,18 +15,16 @@ import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth,onlineUsers } = useAuthStore();
-  const {theme} = useThemeStore()
-
-  console.log({onlineUsers})
+  const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { theme } = useThemeStore();
 
   useEffect(() => {
-    checkAuth();
+    checkAuth(); // ✅ checks session
   }, [checkAuth]);
-
 
   if (isCheckingAuth && !authUser) {
     return (
@@ -35,16 +37,38 @@ const App = () => {
   return (
     <div data-theme={theme}>
       <Navbar />
-      <div>
+      <div className="pt-16 px-4">
         <Routes>
-          <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+          {/* ✅ Home and Feed use FeedPage */}
+          <Route path="/" element={authUser ? <FeedPage /> : <Navigate to="/login" />} />
+          <Route path="/feed" element={authUser ? <FeedPage /> : <Navigate to="/login" />} />
+
+          {/* ✅ Chat Page */}
+          <Route path="/chat" element={authUser ? <ChatPage /> : <Navigate to="/login" />} />
+          <Route path="/chat/:id" element={authUser ? <ChatPage /> : <Navigate to="/login" />} />
+
+          {/* ✅ HomePage (fallback or future use) */}
+          <Route path="/home" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+
+          {/* ✅ Friend Requests */}
+          <Route path="/requests" element={authUser ? <ConnectionRequests /> : <Navigate to="/login" />} />
+
+          {/* ✅ Auth Routes */}
           <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+
+          {/* ✅ User Settings/Profile */}
           <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to="/login" />} />
           <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+          <Route path="/edit-profile" element={authUser ? <EditProfile /> : <Navigate to="/login" />} />
+
+          {/* 404 fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
+        {/* Toasts */}
         <Toaster />
+        <ToastContainer />
       </div>
     </div>
   );

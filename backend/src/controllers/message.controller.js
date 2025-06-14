@@ -1,74 +1,81 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
-import { getReceiverSocketId, io } from "../lib/socket.js";
+import { getReceiverSocketId, io, isUserOnline } from "../lib/socket.js";
 
-// ✅ Get all users for sidebar (excluding current user)
+// ✅ Get users for sidebar (with online/offline)
 export const getUserForSidebar = async (req, res) => {
-    try {
-        const loggedInUserId = req.user._id;
-        const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+  try {
+    const users = await User.find({ _id: { $ne: req.user._id } }).select("-password");
 
-        res.status(200).json(filteredUsers);
-    } catch (error) {
-        console.error("Error in getUsersForSidebar:", error.message);
-        res.status(500).json({ error: "Internal server error" });
-    }
+    const usersWithStatus = users.map((user) => ({
+      _id: user._id,
+      fullName: user.fullName,
+      profilePic: user.profilePic,
+      email: user.email,
+      skills: user.skills || [],
+      location: user.location || {},
+      isOnline: isUserOnline(user._id.toString()),
+    }));
+
+    res.status(200).json(usersWithStatus);
+  } catch (error) {
+    console.error("Sidebar error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-// ✅ Get all messages between logged-in user and another user
+// ✅ Get messages between two users
 export const getMessages = async (req, res) => {
-    try {
-        const { id: userToChatId } = req.params;
-        const myId = req.user._id;
+  try {
+    const myId = req.user._id;
+    const userToChatId = req.params.id;
 
-        const messages = await Message.find({
-            $or: [
-                { senderId: myId, receiverId: userToChatId },
-                { senderId: userToChatId, receiverId: myId }
-            ]
-        });
+    const messages = await Message.find({
+      $or: [
+        { senderId: myId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: myId },
+      ],
+    }).sort({ createdAt: 1 }); // optional: sort by time
 
-        res.status(200).json(messages);
-    } catch (error) {
-        console.log("Error in getMessages controller:", error.message);
-        res.status(500).json({ error: "Internal server error" });
-    }
+    res.status(200).json(messages);
+  } catch (error) {
+    console.error("Get messages error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-// ✅ Send a message (text, image, or location)
+// ✅ Send message (text, image, location)
 export const sendMessage = async (req, res) => {
-    try {
-        const { text, image, location } = req.body; // Accept location from frontend
-        const { id: receiverId } = req.params;
-        const senderId = req.user._id;
+  try {
+    const { text, image, location } = req.body;
+    const receiverId = req.params.id;
+    const senderId = req.user._id;
 
-        let imageUrl;
-        if (image) {
-            // Upload base64 image to Cloudinary
-            const uploadResponse = await cloudinary.uploader.upload(image);
-            imageUrl = uploadResponse.secure_url;
-        }
-
-        const newMessage = new Message({
-            senderId,
-            receiverId,
-            text,
-            image: imageUrl,
-            location: location || null  // Save location if present
-        });
-
-        await newMessage.save();
-
-        // ✅ Real-time message using socket.io
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
-        }
-
-        res.status(201).json(newMessage);
-    } catch (error) {
-        console.log("Error in sendMessage controller:", error.message);
-        res.status(500).json({ error: "Internal server error" });
+    let imageUrl = "";
+    if (image) {
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
     }
+
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text,
+      image: imageUrl || "",
+      location: location || null,
+    });
+
+    await newMessage.save();
+
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error("Send message error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };

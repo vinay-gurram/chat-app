@@ -1,4 +1,4 @@
-// socket.js
+
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
@@ -13,32 +13,37 @@ const io = new Server(server, {
   },
 });
 
-// Used to store online users
+// Used to track online users
 const userSocketMap = {}; // userId -> socketId
 
-// Exported helper function to get socket ID for a receiver
-export function getReceiverSocketId(receiverId) {
+// Helper: check if user is online
+export const isUserOnline = (userId) => {
+  return userSocketMap.hasOwnProperty(userId);
+};
+
+// Helper: get receiver socket ID
+export const getReceiverSocketId = (receiverId) => {
   return userSocketMap[receiverId];
-}
+};
 
+// Export server parts
+export { app, server, io };
+
+// Handle connection
 io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
-
   const userId = socket.handshake.query.userId;
+
   if (userId) {
     userSocketMap[userId] = socket.id;
+    console.log(`✅ User connected: ${userId}`);
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
   }
 
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
-
   socket.on("disconnect", () => {
-    console.log("A user disconnected:", socket.id);
     if (userId) {
       delete userSocketMap[userId];
+      console.log(`❌ User disconnected: ${userId}`);
       io.emit("getOnlineUsers", Object.keys(userSocketMap));
     }
   });
 });
-
-// Export app, server, and io for use in other modules
-export { io, app, server };

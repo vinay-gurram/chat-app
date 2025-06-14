@@ -2,7 +2,6 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
-import { use } from "react";
 
 export const useChatStore = create((set, get) => ({
     messages: [],
@@ -11,11 +10,11 @@ export const useChatStore = create((set, get) => ({
     isUsersLoading: false,
     isMessagesLoading: false,
 
-    /* Get Users */
+    /* Get Users - Only accepted friends */
     getUsers: async () => {
         set({ isUsersLoading: true });
         try {
-            const response = await axiosInstance.get("/messages/users");
+            const response = await axiosInstance.get("/chat-users");
             set({ users: response.data });
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to load users");
@@ -62,18 +61,16 @@ export const useChatStore = create((set, get) => ({
     /* Subscribe to Messages */
     subscribeToMessages: () => {
         const { selectedUser } = get();
-        if(!selectedUser) {
+        if (!selectedUser) {
             return toast.error("Please select a user to chat");
         }
         const socket = useAuthStore.getState().socket;
 
-       
-
         socket.on("newMessage", (newMessage) => {
             const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
-            if (newMessage.senderId !== selectedUser._id) return;
+            if (!isMessageSentFromSelectedUser) return;
             set({
-                messages:[...get().messages, newMessage],
+                messages: [...get().messages, newMessage],
             });
         });
     },

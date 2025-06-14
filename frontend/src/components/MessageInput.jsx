@@ -58,6 +58,7 @@ const MessageInput = () => {
       toast.error("Geolocation is not supported by your browser.");
       return;
     }
+
     setSendingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
@@ -68,9 +69,30 @@ const MessageInput = () => {
         setSendingLocation(false);
       },
       (error) => {
-        toast.error("Failed to get location.");
-        console.error(error);
+        let message = "Failed to get location.";
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Location permission denied.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Location unavailable. Try again with a better signal.";
+            break;
+          case error.TIMEOUT:
+            message = "Location request timed out.";
+            break;
+          default:
+            message = "An unknown error occurred.";
+        }
+
+        toast.error(message);
+        console.error("Geolocation error:", error);
         setSendingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   };
