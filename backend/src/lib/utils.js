@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 /**
  * Generates a JWT token and stores it in an HTTP-only cookie.
- * Works with cross-origin (e.g., Vercel + Render deployments).
+ * This setup works for cross-origin deployments like Vercel + Render.
  */
 export function generateToken(userId, res) {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -10,21 +10,21 @@ export function generateToken(userId, res) {
   });
 
   res.cookie("jwt", token, {
-    httpOnly: true,          // Can't be accessed via client-side JS
-    secure: true,            // Only sent over HTTPS
-    sameSite: "None",        // Required for cross-origin cookies
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,       // Protect from JS access
+    secure: true,         // Only sent over HTTPS
+    sameSite: "None",     // Required for cross-site cookies
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
   });
 
   return token;
 }
 
 /**
- * Calculates distance between two coordinates (Haversine formula).
+ * Calculates distance between two GPS coordinates using Haversine formula.
  * @returns Distance in kilometers.
  */
 export function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of Earth in km
+  const R = 6371; // Earth radius in km
   const toRad = (deg) => (deg * Math.PI) / 180;
 
   const dLat = toRad(lat2 - lat1);

@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { axiosInstance } from "../lib/axios.js";
+import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-// ✅ Dynamically use correct URL (local or Render)
+// ✅ Strip `/api` from base URL for socket connection
 const BASE_URL = import.meta.env.VITE_API_URL.replace("/api", "");
 
 export const useAuthStore = create((set, get) => ({
@@ -15,19 +15,21 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   socket: null,
 
+  // ✅ Check if user is logged in (used on page load)
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
       set({ authUser: res.data });
-      get().connectSocket();
+      get().connectSocket(); // connect to socket if authenticated
     } catch (error) {
       set({ authUser: null });
-      console.log("Error in checkAuth:", error);
+      console.error("Error in checkAuth:", error);
     } finally {
       set({ isCheckingAuth: false });
     }
   },
 
+  // ✅ Signup
   signup: async (data) => {
     set({ isSigningIn: true });
     try {
@@ -44,6 +46,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // ✅ Login
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
@@ -58,6 +61,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // ✅ Logout
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -69,12 +73,13 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // ✅ Update profile
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
       set({ authUser: res.data });
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated");
       return true;
     } catch (error) {
       toast.error(error.response?.data?.message || "Update failed");
@@ -84,26 +89,29 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // ✅ Connect to Socket.IO server
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
+    const { authUser, socket } = get();
+    if (!authUser || socket?.connected) return;
 
-    const socket = io(BASE_URL, {
+    const newSocket = io(BASE_URL, {
       query: { userId: authUser._id },
       withCredentials: true,
     });
 
-    socket.connect();
-    set({ socket });
+    newSocket.connect();
+    set({ socket: newSocket });
 
-    socket.on("getOnlineUsers", (userIds) => {
+    newSocket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
   },
 
+  // ✅ Disconnect Socket.IO
   disconnectSocket: () => {
-    if (get().socket?.connected) {
-      get().socket.disconnect();
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.disconnect();
       set({ socket: null, onlineUsers: [] });
     }
   },

@@ -15,7 +15,7 @@ import feedRoutes from "./routes/feed.route.js";
 import friendRoutes from "./routes/friend.route.js";
 import chatUsersRoute from "./routes/chatUsers.route.js";
 
-// Connect DB
+// Connect to MongoDB
 connectDB();
 
 // CORS middleware
@@ -26,6 +26,7 @@ app.use(
   })
 );
 
+// Parse JSON and cookies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
