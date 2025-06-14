@@ -1,8 +1,30 @@
 import jwt from "jsonwebtoken";
 
-// ✅ Correct export for calculateDistance
+/**
+ * Generates a JWT token and stores it in an HTTP-only cookie.
+ * Works with cross-origin (e.g., Vercel + Render deployments).
+ */
+export function generateToken(userId, res) {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  res.cookie("jwt", token, {
+    httpOnly: true,          // Can't be accessed via client-side JS
+    secure: true,            // Only sent over HTTPS
+    sameSite: "None",        // Required for cross-origin cookies
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return token;
+}
+
+/**
+ * Calculates distance between two coordinates (Haversine formula).
+ * @returns Distance in kilometers.
+ */
 export function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth radius in kilometers
+  const R = 6371; // Radius of Earth in km
   const toRad = (deg) => (deg * Math.PI) / 180;
 
   const dLat = toRad(lat2 - lat1);
@@ -16,20 +38,4 @@ export function calculateDistance(lat1, lon1, lat2, lon2) {
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
-}
-
-// ✅ Correct export for generateToken
-export function generateToken(userId, res) {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  res.cookie("jwt", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV !== "development",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  return token;
 }
