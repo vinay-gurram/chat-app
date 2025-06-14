@@ -1,4 +1,3 @@
-
 import express from "express";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import {
@@ -12,19 +11,14 @@ import Friend from "../models/friend.model.js";
 
 const router = express.Router();
 
-// ✅ POST /api/friends/send
 router.post("/send", protectRoute, async (req, res) => {
   try {
     const { friendId } = req.body;
     const userId = req.user._id;
 
-    if (!friendId) {
-      return res.status(400).json({ message: "friendId is required" });
-    }
-
-    if (userId.toString() === friendId) {
+    if (!friendId) return res.status(400).json({ message: "friendId is required" });
+    if (userId.toString() === friendId)
       return res.status(400).json({ message: "Cannot send request to yourself" });
-    }
 
     const existing = await Friend.findOne({
       $or: [
@@ -49,7 +43,6 @@ router.post("/send", protectRoute, async (req, res) => {
   }
 });
 
-// ✅ Other Friend Endpoints
 router.post("/accept", protectRoute, acceptFriendRequest);
 router.post("/ignore", protectRoute, ignoreFriendRequest);
 router.get("/pending", protectRoute, getPendingFriendRequests);

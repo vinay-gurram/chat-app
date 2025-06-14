@@ -1,4 +1,3 @@
-
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
@@ -13,23 +12,18 @@ const io = new Server(server, {
   },
 });
 
-// Used to track online users
 const userSocketMap = {}; // userId -> socketId
 
-// Helper: check if user is online
-export const isUserOnline = (userId) => {
-  return userSocketMap.hasOwnProperty(userId);
-};
-
-// Helper: get receiver socket ID
 export const getReceiverSocketId = (receiverId) => {
   return userSocketMap[receiverId];
 };
 
-// Export server parts
+export const isUserOnline = (userId) => {
+  return userSocketMap.hasOwnProperty(userId);
+};
+
 export { app, server, io };
 
-// Handle connection
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
 

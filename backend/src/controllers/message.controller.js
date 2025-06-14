@@ -3,7 +3,6 @@ import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io, isUserOnline } from "../lib/socket.js";
 
-// ✅ Get users for sidebar (with online/offline)
 export const getUserForSidebar = async (req, res) => {
   try {
     const users = await User.find({ _id: { $ne: req.user._id } }).select("-password");
@@ -25,7 +24,6 @@ export const getUserForSidebar = async (req, res) => {
   }
 };
 
-// ✅ Get messages between two users
 export const getMessages = async (req, res) => {
   try {
     const myId = req.user._id;
@@ -36,7 +34,7 @@ export const getMessages = async (req, res) => {
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
-    }).sort({ createdAt: 1 }); // optional: sort by time
+    }).sort({ createdAt: 1 });
 
     res.status(200).json(messages);
   } catch (error) {
@@ -45,7 +43,6 @@ export const getMessages = async (req, res) => {
   }
 };
 
-// ✅ Send message (text, image, location)
 export const sendMessage = async (req, res) => {
   try {
     const { text, image, location } = req.body;
@@ -79,3 +76,4 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+

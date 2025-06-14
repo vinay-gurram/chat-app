@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 export const signup = async (req, res) => {
