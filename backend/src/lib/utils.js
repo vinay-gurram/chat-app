@@ -1,23 +1,20 @@
 import jwt from "jsonwebtoken";
 
-/**
- * Generates a JWT token and stores it in an HTTP-only cookie.
- * This setup works for cross-origin deployments like Vercel + Render.
- */
 export function generateToken(userId, res) {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
   res.cookie("jwt", token, {
-    httpOnly: true,       // Protect from JS access
-    secure: true,         // Only sent over HTTPS
-    sameSite: "None",     // Required for cross-site cookies
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // true on Render
+    sameSite: "None", // required for cross-site
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return token;
 }
+
 
 /**
  * Calculates distance between two GPS coordinates using Haversine formula.
