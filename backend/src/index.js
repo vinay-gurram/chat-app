@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // ✅ Load .env variables first
+dotenv.config(); // ✅ Load environment variables first
 
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -7,7 +7,7 @@ import cors from "cors";
 import { connectDB } from "./lib/db.js";
 import { app, server } from "./lib/socket.js";
 
-// ✅ Import API routes
+// ✅ Routes
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import raiseHandRoutes from "./routes/raiseHand.route.js";
@@ -18,29 +18,26 @@ import chatUsersRoute from "./routes/chatUsers.route.js";
 // ✅ Connect to MongoDB
 connectDB();
 
-// ✅ Enable CORS for localhost + Vercel domain
+// ✅ Setup CORS (supports both dev and deployed frontend)
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // Local frontend
-      "https://chat-app-1-git-main-vinays-projects-076db223.vercel.app", // Vercel deployed frontend
-    ],
-    credentials: true, // Allow cookies
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
   })
 );
 
-// ✅ Common middleware
+// ✅ Middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-// ✅ Register API routes
-app.use("/api/auth", authRoutes);            //  Auth: login/signup/check
-app.use("/api/messages", messageRoutes);     //  Chat messages
-app.use("/api/raise-hand", raiseHandRoutes); //  Raise hand
-app.use("/api/feed", feedRoutes);            //  Feed of nearby users
-app.use("/api/friends", friendRoutes);       //  Friends management
-app.use("/api/chat-users", chatUsersRoute);  //  Online users sidebar
+// ✅ Mount Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/raise-hand", raiseHandRoutes);
+app.use("/api/feed", feedRoutes);
+app.use("/api/friends", friendRoutes);
+app.use("/api/chat-users", chatUsersRoute);
 
 // ✅ Start server
 const PORT = process.env.PORT || 5001;
