@@ -1,14 +1,14 @@
-import jwt from "jsonwebtoken";
-
 export function generateToken(userId, res) {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // true on Render
-    sameSite: "None", // required for cross-site
+    secure: isProduction, // only true in prod
+    sameSite: isProduction ? "None" : "Lax", // None for cross-site, Lax for localhost
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
