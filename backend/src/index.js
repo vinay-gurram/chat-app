@@ -21,8 +21,8 @@ connectDB();
 // ✅ Dynamic CORS
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://chat-app-git-main-vinays-projects-076db223.vercel.app",
-  "https://chat-10rtsmtk4-vinays-projects-076db223.vercel.app",
+  "https://chat-app-git-main-vinays-projects-076db223.vercel.app"
+  
 ];
 
 app.use(
