@@ -5,11 +5,14 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
+// ✅ Full list of allowed origins
 const allowedOrigins = [
-  process.env.CORS_ORIGIN,
-  "http://localhost:5173"
+  "http://localhost:5173",
+  "https://chat-app-git-main-vinays-projects-076db223.vercel.app",
+  "https://chat-10rtsmtk4-vinays-projects-076db223.vercel.app"
 ];
 
+// ✅ Proper CORS setup for socket.io
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -17,12 +20,14 @@ const io = new Server(server, {
   },
 });
 
+// ✅ Map of connected users
 const userSocketMap = {};
 
 export const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
 export const isUserOnline = (userId) => userSocketMap.hasOwnProperty(userId);
 export { app, server, io };
 
+// ✅ On socket connection
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
 
