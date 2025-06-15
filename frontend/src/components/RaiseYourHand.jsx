@@ -49,10 +49,14 @@ const RaiseYourHand = () => {
 
     setLoading(true);
     try {
-      const res = await axiosInstance.post("/raise-hand", {
-        latitude: location.lat,
-        longitude: location.lng,
-      });
+      const res = await axiosInstance.post(
+        "/raise-hand",
+        {
+          latitude: location.lat,
+          longitude: location.lng,
+        },
+        { withCredentials: true }
+      );
 
       console.log("Nearby Users Response:", res.data);
 
