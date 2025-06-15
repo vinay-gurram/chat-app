@@ -1,10 +1,9 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import axios from "axios";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { Hand } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
+import { axiosInstance } from "../lib/axios";
 
 const containerStyle = {
   width: "100%",
@@ -16,13 +15,11 @@ const RaiseYourHand = () => {
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
   const [location, setLocation] = useState({ lat: null, lng: null });
-  const { token } = useAuthStore(); // Optional if you need token
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyCT7icnKNnHhkEzv3TUu7zJVqB7EYME4CM",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
-  // Get current location on mount
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -38,7 +35,6 @@ const RaiseYourHand = () => {
     );
   }, []);
 
-  // Raise hand and get nearby users
   const handleRaiseHand = async () => {
     if (!location.lat || !location.lng) {
       toast.error("Location not available yet.");
@@ -46,21 +42,13 @@ const RaiseYourHand = () => {
     }
 
     setLoading(true);
-
     try {
-      const res = await axios.post(
-        "http://localhost:5001/api/raise-hand",
-        {
-          latitude: location.lat,
-          longitude: location.lng,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }, // optional if protected
-          withCredentials: true,
-        }
-      );
+      const res = await axiosInstance.post("/raise-hand", {
+        latitude: location.lat,
+        longitude: location.lng,
+      });
 
-      console.log("Nearby Users Response:", JSON.stringify(res.data, null, 2));
+      console.log("Nearby Users Response:", res.data);
 
       setUsersNearby(res.data.users || []);
       setCount(res.data.users?.length || 0);
@@ -95,7 +83,6 @@ const RaiseYourHand = () => {
             👋 {count} users raised hands near you (within 5km)
           </p>
 
-          {/* Google Map */}
           <div className="w-full h-[400px] mt-6">
             {isLoaded && location.lat && location.lng ? (
               <GoogleMap
@@ -103,10 +90,7 @@ const RaiseYourHand = () => {
                 center={location}
                 zoom={13}
               >
-                {/* Your Location Marker */}
                 <Marker position={location} label="You" />
-
-                {/* Nearby Users Markers */}
                 {usersNearby.map((user) => (
                   <Marker
                     key={user._id}
@@ -114,7 +98,7 @@ const RaiseYourHand = () => {
                       lat: user.location?.latitude,
                       lng: user.location?.longitude,
                     }}
-                    label={user.name}
+                    label={user.fullName || "User"}
                   />
                 ))}
               </GoogleMap>
@@ -123,7 +107,6 @@ const RaiseYourHand = () => {
             )}
           </div>
 
-          {/* Nearby User Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6 px-4">
             {usersNearby.map((user) => (
               <div
@@ -131,13 +114,15 @@ const RaiseYourHand = () => {
                 className="bg-base-200 p-4 rounded-lg shadow flex items-center gap-4"
               >
                 <img
-                  src={user.avatar || "/default.png"}
+                  src={user.profilePic || "/default.png"}
                   className="w-12 h-12 rounded-full object-cover"
-                  alt={user.name}
+                  alt={user.fullName}
                 />
                 <div>
-                  <p className="font-semibold">{user.name}</p>
-                  <p className="text-sm text-zinc-400">{user.email}</p>
+                  <p className="font-semibold">{user.fullName}</p>
+                  <p className="text-sm text-zinc-400">
+                    {user.skills?.join(", ") || "No skills listed"}
+                  </p>
                 </div>
               </div>
             ))}
