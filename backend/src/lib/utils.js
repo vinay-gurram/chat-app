@@ -3,17 +3,18 @@ export function generateToken(userId, res) {
     expiresIn: "7d",
   });
 
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProd = process.env.NODE_ENV === "production";
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: isProduction, // only true in prod
-    sameSite: isProduction ? "None" : "Lax", // None for cross-site, Lax for localhost
+    secure: isProd,               // true for HTTPS in production
+    sameSite: isProd ? "None" : "Lax", // Cross-site cookie rules
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return token;
 }
+
 
 
 /**
