@@ -1,6 +1,12 @@
 import jwt from "jsonwebtoken";
+
+/**
+ * Generates a JWT token and sets it in cookie
+ */
 export function generateToken(userId, res) {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 
   const isProduction = process.env.NODE_ENV === "production";
 
@@ -13,8 +19,6 @@ export function generateToken(userId, res) {
 
   return token;
 }
-
-
 
 
 /**
