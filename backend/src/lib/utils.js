@@ -1,19 +1,19 @@
-export function generateToken(userId, res) {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
 
-  const isProd = process.env.NODE_ENV === "production";
+export function generateToken(userId, res) {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+  const isProduction = process.env.NODE_ENV === "production";
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: isProd,               // true for HTTPS in production
-    sameSite: isProd ? "None" : "Lax", // Cross-site cookie rules
+    secure: isProduction,
+    sameSite: isProduction ? "None" : "Lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return token;
 }
+
 
 
 

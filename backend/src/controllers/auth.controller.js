@@ -1,3 +1,5 @@
+// controllers/auth.controller.js
+
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
@@ -16,8 +18,8 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "Email already exists" });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ fullName, email, password: hashedPassword });
@@ -40,12 +42,23 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
+    console.log("Login request received for:", email);
     const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+
+    if (!user) {
+      console.log("User not found");
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Password mismatch");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     generateToken(user._id, res);
+    console.log("✅ Token set in cookie");
+
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
@@ -53,7 +66,7 @@ export const login = async (req, res) => {
       profilePic: user.profilePic || "",
     });
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -72,7 +85,7 @@ export const updateProfile = async (req, res) => {
     if (fullName) updateData.fullName = fullName;
     if (skills) updateData.skills = skills;
 
-    if (location && location.latitude && location.longitude) {
+    if (location?.latitude && location?.longitude) {
       const apiKey = process.env.GOOGLE_MAPS_API_KEY;
       const geoRes = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=${apiKey}`
@@ -88,20 +101,17 @@ export const updateProfile = async (req, res) => {
     }
 
     if (profilePic) {
-      const uploadResponse = await cloudinary.uploader.upload(profilePic);
-      updateData.profilePic = uploadResponse.secure_url;
+      const uploadRes = await cloudinary.uploader.upload(profilePic);
+      updateData.profilePic = uploadRes.secure_url;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
     }).select("-password");
 
-    res.status(200).json({
-      message: "Profile updated successfully",
-      user: updatedUser,
-    });
+    res.status(200).json({ user: updatedUser });
   } catch (error) {
-    console.error("Update profile error:", error.message);
+    console.error("Update profile error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
