@@ -15,6 +15,7 @@ const RaiseYourHand = () => {
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
   const [location, setLocation] = useState({ lat: null, lng: null });
+  const { authUser } = useAuthStore();
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -38,6 +39,11 @@ const RaiseYourHand = () => {
   const handleRaiseHand = async () => {
     if (!location.lat || !location.lng) {
       toast.error("Location not available yet.");
+      return;
+    }
+
+    if (!authUser?._id) {
+      toast.error("Please login to raise your hand");
       return;
     }
 
