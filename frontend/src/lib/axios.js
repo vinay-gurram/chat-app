@@ -2,10 +2,10 @@ import axios from "axios";
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
+  withCredentials: true, // ✅ sends cookies
 });
 
-// ✅ Interceptor to handle 401 Unauthorized globally
+// ✅ Global 401 Interceptor
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
