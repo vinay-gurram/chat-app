@@ -51,6 +51,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
+      window.hasRedirected = false;
       get().connectSocket();
       toast.success("Logged in successfully");
     } catch (err) {
@@ -59,6 +60,7 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoggingIn: false });
     }
   },
+  
 
   // ✅ Logout
   logout: async () => {
