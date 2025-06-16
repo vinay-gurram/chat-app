@@ -1,4 +1,3 @@
-
 import RaiseHand from "../models/raiseHand.model.js";
 import User from "../models/user.model.js";
 
@@ -16,18 +15,16 @@ export const raiseHandHandler = async (req, res) => {
       coordinates: [longitude, latitude],
     };
 
-    // Upsert user's raise hand
+    // ✅ Step 1: Upsert current user's raise hand location and time
     await RaiseHand.findOneAndUpdate(
       { user: userId },
       { location, updatedAt: new Date() },
       { upsert: true, new: true }
     );
 
-    // Delete old raises
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-    await RaiseHand.deleteMany({ updatedAt: { $lt: tenMinutesAgo } });
 
-    // Get users within 5km radius
+    // ✅ Step 2: Fetch nearby users within 5km and raised hand in last 10 minutes
     const nearby = await RaiseHand.find({
       location: {
         $nearSphere: {
@@ -36,7 +33,11 @@ export const raiseHandHandler = async (req, res) => {
         },
       },
       user: { $ne: userId },
+      updatedAt: { $gte: tenMinutesAgo }, // ✅ only fresh hand raises
     }).populate("user", "fullName profilePic skills status location");
+
+    // ✅ Step 3: Clean up old entries AFTER fetching
+    await RaiseHand.deleteMany({ updatedAt: { $lt: tenMinutesAgo } });
 
     res.status(200).json({ users: nearby.map((entry) => entry.user) });
   } catch (err) {
