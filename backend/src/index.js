@@ -15,27 +15,23 @@ import feedRoutes from "./routes/feed.route.js";
 import friendRoutes from "./routes/friend.route.js";
 import chatUsersRoute from "./routes/chatUsers.route.js";
 
-// Connect to MongoDB
+// ✅ Connect to MongoDB
 connectDB();
 
-// ✅ Allowed Origins
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://chat-app-git-main-vinays-projects-076db223.vercel.app",
-  "https://chat-app.vercel.app",
-  "vercel.app", // wildcard subdomains (use with caution)
-];
+// ✅ Read allowed origins from env or fallback
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? [process.env.CORS_ORIGIN, "http://localhost:5173"]
+  : [
+      "http://localhost:5173",
+      "https://chat-app-git-main-vinays-projects-076db223.vercel.app",
+      "https://chat-app.vercel.app",
+    ];
 
 // ✅ CORS Middleware
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (
-        !origin ||
-        allowedOrigins.some((allowed) =>
-          origin.includes(allowed)
-        )
-      ) {
+      if (!origin || allowedOrigins.some((o) => origin.includes(o))) {
         callback(null, true);
       } else {
         console.error("❌ CORS blocked:", origin);

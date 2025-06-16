@@ -21,6 +21,7 @@ export function generateToken(userId, res) {
 }
 
 
+
 /**
  * Calculates distance between two GPS coordinates using Haversine formula.
  * @returns Distance in kilometers.
