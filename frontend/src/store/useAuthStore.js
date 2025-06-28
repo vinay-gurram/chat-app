@@ -13,6 +13,7 @@ export const useAuthStore = create((set, get) => ({
   isCheckingAuth: true,
   onlineUsers: [],
   socket: null,
+  pendingRequests: [],
 
   // ✅ Check if user is already logged in
   checkAuth: async () => {
@@ -20,6 +21,7 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.get("/auth/check");
       set({ authUser: res.data });
       get().connectSocket();
+      get().fetchPendingRequests(); // Fetch on auth check
     } catch (err) {
       set({ authUser: null });
       console.error("checkAuth failed:", err);
@@ -53,6 +55,7 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: res.data });
       window.hasRedirected = false;
       get().connectSocket();
+      get().fetchPendingRequests(); // Fetch after login
       toast.success("Logged in successfully");
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
@@ -60,13 +63,12 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoggingIn: false });
     }
   },
-  
 
   // ✅ Logout
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
-      set({ authUser: null });
+      set({ authUser: null, pendingRequests: [] });
       get().disconnectSocket();
       toast.success("Logged out");
     } catch (err) {
@@ -114,6 +116,38 @@ export const useAuthStore = create((set, get) => ({
     if (socket?.connected) {
       socket.disconnect();
       set({ socket: null, onlineUsers: [] });
+    }
+  },
+
+  // ✅ Fetch Pending Friend Requests
+  fetchPendingRequests: async () => {
+    try {
+      const res = await axiosInstance.get("/friends/pending");
+      set({ pendingRequests: res.data.requests || [] }); // ✅ Already populated from backend
+    } catch {
+      toast.error("Failed to load requests");
+    }
+  },
+
+  // ✅ Accept Friend Request
+  acceptFriendRequest: async (friendId) => {
+    try {
+      await axiosInstance.post("/friends/accept", { friendId });
+      get().fetchPendingRequests(); // Refresh list
+      toast.success("Friend request accepted");
+    } catch {
+      toast.error("Accept failed");
+    }
+  },
+
+  // ✅ Ignore Friend Request
+  ignoreFriendRequest: async (friendId) => {
+    try {
+      await axiosInstance.post("/friends/ignore", { friendId });
+      get().fetchPendingRequests(); // Refresh list
+      toast.success("Friend request ignored");
+    } catch {
+      toast.error("Ignore failed");
     }
   },
 }));

@@ -18,27 +18,11 @@ import chatUsersRoute from "./routes/chatUsers.route.js";
 // ✅ Connect to MongoDB
 connectDB();
 
-// ✅ Read allowed origins from env or fallback
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? [process.env.CORS_ORIGIN, "http://localhost:5173"]
-  : [
-      "http://localhost:5173",
-      "https://chat-app-git-main-vinays-projects-076db223.vercel.app",
-      "https://chat-app.vercel.app",
-    ];
-
-// ✅ CORS Middleware
+// ✅ CORS Middleware for local dev
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.some((o) => origin.includes(o))) {
-        callback(null, true);
-      } else {
-        console.error("❌ CORS blocked:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
+    origin: "http://localhost:5173", 
+    credentials: true,               
   })
 );
 

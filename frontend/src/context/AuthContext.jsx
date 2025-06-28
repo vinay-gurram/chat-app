@@ -1,40 +1,55 @@
-/*import { createContext, useContext, useState, useEffect } from 'react';
+// src/context/AuthContext.jsx
+import { createContext, useContext, useState, useEffect } from "react";
+import { axiosInstance } from "../lib/axios";
+import { toast } from "react-hot-toast";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Optional: auto-load token from localStorage if it exists
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-
-    if (storedToken) setToken(storedToken);
-    if (storedUser) setUser(storedUser);
-  }, []);
-
-  const login = (newToken, newUser) => {
-    setToken(newToken);
-    setUser(newUser);
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+  const fetchUser = async () => {
+    try {
+      const res = await axiosInstance.get("/auth/me");
+      setUser(res.data.user);
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  const login = async ({ email, password }) => {
+    try {
+      const res = await axiosInstance.post("/auth/login", { email, password });
+      setUser(res.data.user);
+      toast.success("Logged in successfully");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed");
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axiosInstance.post("/auth/logout");
+      setUser(null);
+      toast.success("Logged out successfully");
+    } catch (err) {
+      toast.error("Logout failed");
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// ✅ useAuth hook to access auth context
-export const useAuth = () => useContext(AuthContext); */
+// ✅ FIX: Export useAuth hook here
+export const useAuth = () => useContext(AuthContext);

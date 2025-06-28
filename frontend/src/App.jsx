@@ -1,5 +1,11 @@
+// src/App.jsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthStore } from "./store/useAuthStore";
+import { useThemeStore } from "./store/useThemeStore";
+
 import Navbar from "./components/Navbar";
-import FeedPage from "./pages/FeedPage"; // ✅ Home page
+import FeedPage from "./pages/FeedPage"; 
 import ConnectionRequests from "./components/ConnectionRequests";
 import HomePage from "./pages/HomePage";
 import SignUpPage from "./pages/SignUpPage";
@@ -9,10 +15,6 @@ import ProfilePage from "./pages/ProfilePage";
 import ChatPage from "./pages/ChatPage";
 import EditProfile from "./pages/EditProfile";
 
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useAuthStore } from "./store/useAuthStore";
-import { useThemeStore } from "./store/useThemeStore";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { ToastContainer } from "react-toastify";
@@ -23,7 +25,7 @@ const App = () => {
   const { theme } = useThemeStore();
 
   useEffect(() => {
-    checkAuth(); // ✅ checks session
+    checkAuth(); // ✅ check cookie
   }, [checkAuth]);
 
   if (isCheckingAuth && !authUser) {
@@ -39,30 +41,17 @@ const App = () => {
       <Navbar />
       <div className="pt-16 px-4">
         <Routes>
-          {/* ✅ Home and Feed use FeedPage */}
           <Route path="/" element={authUser ? <FeedPage /> : <Navigate to="/login" />} />
           <Route path="/feed" element={authUser ? <FeedPage /> : <Navigate to="/login" />} />
-
-          {/* ✅ Chat Page */}
           <Route path="/chat" element={authUser ? <ChatPage /> : <Navigate to="/login" />} />
           <Route path="/chat/:id" element={authUser ? <ChatPage /> : <Navigate to="/login" />} />
-
-          {/* ✅ HomePage (fallback or future use) */}
           <Route path="/home" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
-
-          {/* ✅ Friend Requests */}
           <Route path="/requests" element={authUser ? <ConnectionRequests /> : <Navigate to="/login" />} />
-
-          {/* ✅ Auth Routes */}
-          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-
-          {/* ✅ User Settings/Profile */}
+          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/login" />} />
+          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/feed" />} />
           <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to="/login" />} />
           <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
           <Route path="/edit-profile" element={authUser ? <EditProfile /> : <Navigate to="/login" />} />
-
-          {/* 404 fallback */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 

@@ -15,31 +15,41 @@ export const raiseHandHandler = async (req, res) => {
       coordinates: [longitude, latitude],
     };
 
-    // ✅ Step 1: Upsert current user's raise hand location and time
+    // ✅ Step 1: Upsert user's raise hand location
     await RaiseHand.findOneAndUpdate(
       { user: userId },
       { location, updatedAt: new Date() },
       { upsert: true, new: true }
     );
 
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    // ✅ Step 2: Update user's own location in User model (needed for frontend map)
+    await User.findByIdAndUpdate(userId, {
+      location: {
+        latitude,
+        longitude,
+        address: "", // Optional - fill with reverse geocoded address if you want
+      },
+    });
 
-    // ✅ Step 2: Fetch nearby users within 5km and raised hand in last 10 minutes
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000); // 10 mins ago
+
+    // ✅ Step 3: Find nearby users who raised hand recently (not current user)
     const nearby = await RaiseHand.find({
       location: {
         $nearSphere: {
           $geometry: location,
-          $maxDistance: 5000,
+          $maxDistance: 5000, // 5km
         },
       },
       user: { $ne: userId },
-      updatedAt: { $gte: tenMinutesAgo }, // ✅ only fresh hand raises
+      updatedAt: { $gte: tenMinutesAgo }, // only recent ones
     }).populate("user", "fullName profilePic skills status location");
 
-    // ✅ Step 3: Clean up old entries AFTER fetching
+    // ✅ Step 4: Delete old hand raise entries (optional cleanup)
     await RaiseHand.deleteMany({ updatedAt: { $lt: tenMinutesAgo } });
 
-    res.status(200).json({ users: nearby.map((entry) => entry.user) });
+    // ✅ Step 5: Send nearby users to frontend
+    res.status(200).json({ users: nearby.map(entry => entry.user) });
   } catch (err) {
     console.error("❌ Raise hand error:", err.message);
     res.status(500).json({ message: "Failed to raise hand" });

@@ -1,13 +1,55 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useAuthStore } from "../store/useAuthStore"; // 🔄 Import Zustand
 
 const EditProfile = () => {
+  const { user, setUser } = useAuthStore(); // 🔥 Zustand state
   const [fullName, setFullName] = useState("");
   const [profilePic, setProfilePic] = useState("");
+  const [skills, setSkills] = useState("");
 
-  const handleSubmit = (e) => {
+  // 🔄 Load current user info
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get("http://localhost:5001/api/auth/me", {
+        withCredentials: true,
+      });
+      const user = res.data;
+      setFullName(user.fullName || "");
+      setProfilePic(user.profilePic || "");
+      setSkills(user.skills?.join(", ") || "");
+      setUser(user); // 🔥 update Zustand
+    } catch (err) {
+      console.error("Failed to load profile", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  // 🔄 Save updated profile
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Send updated profile to backend here
-    console.log("Updating profile:", { fullName, profilePic });
+    try {
+      const skillArray = skills.split(",").map((s) => s.trim()).filter(Boolean);
+
+      const res = await axios.put(
+        "http://localhost:5001/api/auth/update",
+        {
+          fullName,
+          profilePic,
+          skills: skillArray,
+        },
+        { withCredentials: true }
+      );
+
+      alert("✅ Profile updated");
+      fetchProfile(); // 🔄 Refresh local
+    } catch (err) {
+      console.error("Update failed", err.response?.data || err.message);
+      alert("❌ Failed to update profile.");
+    }
   };
 
   return (
@@ -26,6 +68,13 @@ const EditProfile = () => {
           placeholder="Profile Pic URL"
           value={profilePic}
           onChange={(e) => setProfilePic(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="text"
+          placeholder="Skills (comma separated)"
+          value={skills}
+          onChange={(e) => setSkills(e.target.value)}
           className="w-full p-2 border rounded"
         />
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">

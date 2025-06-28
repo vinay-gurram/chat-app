@@ -1,5 +1,5 @@
 import Friend from "../models/friend.model.js";
-import User from "../models/user.model.js";
+
 
 // ✅ Accept friend request
 export const acceptFriendRequest = async (req, res) => {
@@ -84,16 +84,22 @@ export const getAcceptedFriends = async (req, res) => {
       $or: [{ user: userId }, { friend: userId }],
       status: "accepted",
     })
-      .populate("user", "username avatar")
-      .populate("friend", "username avatar");
+      .populate("user", "username fullName profilePic avatar skills location status")
+      .populate("friend", "username fullName profilePic avatar skills location status");
 
     const result = acceptedFriends.map((f) => {
       const friendUser =
         f.user._id.toString() === userId.toString() ? f.friend : f.user;
+
       return {
         _id: friendUser._id,
         username: friendUser.username,
-        avatar: friendUser.avatar,
+        fullName: friendUser.fullName,
+        profilePic: friendUser.profilePic,
+        avatar: friendUser.avatar, // fallback
+        skills: friendUser.skills || [],
+        location: friendUser.location,
+        isOnline: friendUser.status === "online",
       };
     });
 
@@ -103,3 +109,5 @@ export const getAcceptedFriends = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch accepted friends" });
   }
 };
+
+   

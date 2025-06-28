@@ -1,20 +1,42 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
-import { getReceiverSocketId, io, isUserOnline } from "../lib/socket.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
+// ✅ Get users for sidebar with unread count
 export const getUserForSidebar = async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.user._id } }).select("-password");
+    const myId = req.user._id;
 
-    const usersWithStatus = users.map((user) => ({
-      _id: user._id,
-      fullName: user.fullName,
-      profilePic: user.profilePic,
-      email: user.email,
-      skills: user.skills || [],
-      location: user.location || {},
-      isOnline: isUserOnline(user._id.toString()),
+    // Fetch all users except myself (or use your accepted friends logic)
+    const friends = await User.find({ _id: { $ne: myId } }).select("_id fullName profilePic");
+
+    // Count unread messages grouped by sender
+    const unreadCounts = await Message.aggregate([
+      {
+        $match: {
+          receiverId: myId,
+          isRead: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$senderId",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Map unread counts
+    const countMap = {};
+    unreadCounts.forEach((u) => {
+      countMap[u._id.toString()] = u.count;
+    });
+
+    // Attach unread count to each user
+    const usersWithStatus = friends.map((friend) => ({
+      ...friend.toObject(),
+      unreadCount: countMap[friend._id.toString()] || 0,
     }));
 
     res.status(200).json(usersWithStatus);
@@ -24,6 +46,7 @@ export const getUserForSidebar = async (req, res) => {
   }
 };
 
+// ✅ Get messages between two users
 export const getMessages = async (req, res) => {
   try {
     const myId = req.user._id;
@@ -43,6 +66,7 @@ export const getMessages = async (req, res) => {
   }
 };
 
+// ✅ Send message with optional image and location
 export const sendMessage = async (req, res) => {
   try {
     const { text, image, location } = req.body;
@@ -77,3 +101,20 @@ export const sendMessage = async (req, res) => {
   }
 };
 
+// ✅ Mark messages as read
+export const markMessagesAsRead = async (req, res) => {
+  try {
+    const myId = req.user._id;
+    const senderId = req.params.id;
+
+    await Message.updateMany(
+      { senderId, receiverId: myId, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    res.status(200).json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.error("Mark as read error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

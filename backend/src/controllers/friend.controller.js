@@ -83,14 +83,26 @@ export const getPendingFriendRequests = async (req, res) => {
     const requests = await Friend.find({
       friend: userId,
       status: "pending",
-    }).populate("user", "username avatar fullName");
+    }).populate("user", "username fullName email avatar profilePic");
 
-    res.status(200).json({ requests });
+    const result = requests.map((r) => {
+      const u = r.user;
+      return {
+        _id: u._id,
+        username: u.username || "No username",
+        fullName: u.fullName || "No name",
+        email: u.email || "No email",
+        avatar: u.profilePic || u.avatar || "/avatar.png",
+      };
+    });
+
+    res.status(200).json({ requests: result });
   } catch (err) {
     console.error("Get pending requests error:", err);
     res.status(500).json({ message: "Failed to fetch pending requests" });
   }
 };
+
 
 // ✅ Get Accepted Friends
 export const getAcceptedFriends = async (req, res) => {
@@ -101,16 +113,19 @@ export const getAcceptedFriends = async (req, res) => {
       $or: [{ user: userId }, { friend: userId }],
       status: "accepted",
     })
-      .populate("user", "username avatar fullName profilePic")
-      .populate("friend", "username avatar fullName profilePic");
+      .populate("user", "username fullName profilePic avatar email")
+      .populate("friend", "username fullName profilePic avatar email");
 
     const result = acceptedFriends.map((f) => {
-      const friendUser = f.user._id.toString() === userId.toString() ? f.friend : f.user;
+      const isUser = f.user._id.toString() === userId.toString();
+      const friendUser = isUser ? f.friend : f.user;
+
       return {
         _id: friendUser._id,
-        username: friendUser.username,
-        fullName: friendUser.fullName,
-        avatar: friendUser.avatar || friendUser.profilePic, 
+        username: friendUser.username || "No username",
+        fullName: friendUser.fullName || "No name",
+        avatar: friendUser.profilePic || friendUser.avatar || "/avatar.png",
+        email: friendUser.email || "No email",
       };
     });
 
@@ -120,6 +135,8 @@ export const getAcceptedFriends = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch accepted friends" });
   }
 };
+
+
 
 
 // ✅ Unfriend Logic

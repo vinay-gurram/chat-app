@@ -1,79 +1,101 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { MessageCircle, UserMinus, UserPlus2 } from "lucide-react";
 
 const NearbyUserCard = ({
   user,
   onSendRequest,
   onUnfriend,
   onChat,
-  isFriend = false,
+  isFriend,
+  isPending,
 }) => {
   const {
-    avatar,
-    fullName,
-    username,
-    name,
+    fullName = "Unknown User",
     skills = [],
-    isOnline,
-    distance,
-    _id,
+    profilePic,
+    avatar,
   } = user;
 
-  const displayName = name || username || fullName || "Unknown";
+  const [justAdded, setJustAdded] = useState(false);
+
+  useEffect(() => {
+    if (isFriend) {
+      setJustAdded(true);
+      const timeout = setTimeout(() => setJustAdded(false), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isFriend]);
+
+  const imageUrl = profilePic || avatar || "/default-avatar.png";
 
   return (
-    <div className="bg-zinc-800 p-4 rounded-2xl shadow-lg text-center animate-fadeIn">
-      <img
-        src={avatar || "/default-avatar.png"}
-        alt="User Avatar"
-        className="w-24 h-24 rounded-full object-cover mx-auto mb-3"
-      />
-
-      <h3 className="text-lg font-semibold text-white">{displayName}</h3>
-
-      <div className="text-sm mb-2">
-        <span
-          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-            isOnline ? "bg-green-600 text-white" : "bg-gray-600 text-white"
-          }`}
-        >
-          {isOnline ? "Online" : "Offline"}
-        </span>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md transition-transform hover:scale-[1.02]">
+      {/* Profile Info */}
+      <div className="flex items-center space-x-4">
+        <img
+          src={imageUrl}
+          alt="Profile"
+          className="w-14 h-14 rounded-full object-cover border"
+        />
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {fullName}
+          </h3>
+        </div>
       </div>
 
+      {/* Skills */}
       {skills.length > 0 && (
-        <p className="text-sm text-gray-400 mb-2">
-          Skills: {skills.join(", ")}
-        </p>
+        <div className="mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Skills:</p>
+          <div className="flex flex-wrap gap-2">
+            {skills.map((skill, idx) => (
+              <span
+                key={idx}
+                className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
-      {distance && (
-        <p className="text-sm text-gray-400 mb-2">
-          📍 {parseFloat(distance).toFixed(2)} km away
-        </p>
-      )}
-
-      <div className="flex justify-center gap-2 mt-4">
+      {/* Action Buttons */}
+      <div className="mt-4 flex justify-between items-center">
         {isFriend ? (
           <>
             <button
               onClick={onChat}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded"
+              className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
             >
-              Chat
+              <MessageCircle size={16} /> Chat
             </button>
             <button
               onClick={onUnfriend}
-              className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
+              className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
             >
-              Unfriend
+              <UserMinus size={16} /> Unfriend
             </button>
+            {justAdded && (
+              <span className="text-sm text-green-600 font-bold animate-pulse ml-2">
+                Added 🎉
+              </span>
+            )}
           </>
+        ) : isPending ? (
+          <button
+            disabled
+            className="bg-yellow-500 text-white px-3 py-1 rounded-lg text-sm w-full text-center animate-pulse cursor-not-allowed"
+          >
+            Pending...
+          </button>
         ) : (
           <button
-            onClick={() => onSendRequest(_id)}
-            className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded"
+            onClick={onSendRequest}
+            className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1 w-full justify-center hover:bg-blue-700"
           >
-            Send Friend Request
+            <UserPlus2 size={16} /> Add Friend
           </button>
         )}
       </div>

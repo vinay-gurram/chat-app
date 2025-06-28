@@ -1,3 +1,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 👇 Add this after Tailwind directives */
+
+@keyframes cricketBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.cricket-background {
+  background-image: url('/cricket-bg-light.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.2;
+  z-index: 0;
+  animation: cricketFloat 20s infinite ease-in-out;
+}
+
+.dark .cricket-background {
+  background-image: url('/cricket-bg-dark.svg');
+  opacity: 0.3;
+}
+
+@keyframes cricketFloat {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+}

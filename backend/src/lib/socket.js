@@ -8,8 +8,6 @@ const server = http.createServer(app);
 // ✅ Full list of allowed origins
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://chat-app-git-main-vinays-projects-076db223.vercel.app",
-  "https://chat-10rtsmtk4-vinays-projects-076db223.vercel.app"
 ];
 
 // ✅ Proper CORS setup for socket.io
